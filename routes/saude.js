@@ -23,6 +23,16 @@ const router = Router()
 const TIMEOUT_FIRESTORE_MS = 2000
 
 /*
+ * `/ready` é pública e faz uma leitura real no Firestore — sem cache, um
+ * monitor chamando dentro do rate limit global (120/min) gera até 172 mil
+ * leituras por dia, o suficiente pra estourar a cota gratuita do Spark e
+ * derrubar o app por 24h (achado ENG-004 da revisão de segurança). O cache
+ * de 20s limita isso a no máximo ~4300 leituras/dia, bem dentro da cota.
+ */
+const CACHE_MS = 20_000
+let cache = null
+
+/*
  * LIVENESS — barato, sem I/O.
  *
  * Só prova que o event loop responde. Não toca em dependência de propósito: se
@@ -52,6 +62,10 @@ router.get('/health', (req, res) => {
  * causa dos outros. Terceiro é monitor separado no Kuma.
  */
 router.get('/ready', async (req, res) => {
+  if (cache && Date.now() - cache.em < CACHE_MS) {
+    return res.status(cache.ok ? 200 : 503).json({ ok: cache.ok, checks: cache.checks })
+  }
+
   const checks = {}
   let timer
 
@@ -71,6 +85,7 @@ router.get('/ready', async (req, res) => {
   }
 
   const ok = Object.values(checks).every(Boolean)
+  cache = { ok, checks, em: Date.now() }
   res.status(ok ? 200 : 503).json({ ok, checks })
 })
 

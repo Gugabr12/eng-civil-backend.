@@ -62,9 +62,13 @@ function limparTentativas(email) {
 // Só 2 contas, criadas pelo admin — sem autocadastro público e sem o desafio
 // por e-mail em duas etapas (aquele fluxo existe para proteger uma base de
 // clientes/pagamentos; aqui a superfície de ataque é outra).
+//
+// 24h em vez do default de 7 dias da toolbox: um token roubado (ex.: celular
+// perdido na obra) vale bem menos tempo, e relogar 1x/dia é aceitável pra um
+// sistema usado todo dia.
 function emitirToken(usuario) {
   const secret = process.env.TOKEN_USUARIO
-  return nodeJWT.generateToken({ idUsuario: usuario._id, role: usuario.role }, secret)
+  return nodeJWT.generateToken({ idUsuario: usuario._id, role: usuario.role }, secret, '24h')
 }
 
 async function entrar(req, res) {

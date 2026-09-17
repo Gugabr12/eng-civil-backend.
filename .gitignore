@@ -2,7 +2,9 @@
 node_modules
 
 # LOCK FILES
-package-lock.json
+# package-lock.json É versionado de propósito (npm ci trava a árvore inteira
+# por hash — sem ele, o core de autenticação, que vem de um pacote npm 0.0.x
+# não-escopado, resolveria versão nova sem verificação a cada deploy).
 yarn.lock
 bun.lock
 bun.lockb

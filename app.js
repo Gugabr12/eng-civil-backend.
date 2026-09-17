@@ -3,13 +3,29 @@ import express from 'express'
 import configs from './configs/index.js'
 
 /*
+ * Sem isso, faltar `BCRYPT_KEY` não dá erro nenhum — o pepper vira a string
+ * literal "undefined" e todo hash de senha sai sem a camada extra, em
+ * silêncio (achado ENG-007 da revisão de segurança). Falha visível no boot é
+ * sempre melhor que um sistema "funcionando" com a proteção furada.
+ */
+function validarVariaveisObrigatorias() {
+  const obrigatorias = ['BCRYPT_KEY', 'TOKEN_USUARIO', 'FIREBASE_PROJECT_ID']
+  if (!process.env.FIRESTORE_EMULATOR_HOST) obrigatorias.push('FIREBASE_SERVICE_ACCOUNT_JSON')
+
+  const faltando = obrigatorias.filter((chave) => !process.env[chave])
+  if (faltando.length > 0) {
+    console.error(`Variáveis de ambiente obrigatórias ausentes: ${faltando.join(', ')}`)
+    process.exit(1)
+  }
+}
+
+/*
  * Monta o Express configurado, sem escutar porta nenhuma — quem faz isso é
- * `dev.js` (desenvolvimento local, `server.listen`) ou `index.js` (Cloud
- * Function, `onRequest`). Antes este arquivo também conectava o Mongoose e já
- * chamava `server.listen(app)` — isso não funciona dentro de uma Cloud
- * Function, onde o runtime é quem escuta a porta.
+ * `index.js` (`server.listen`, tanto local quanto no Render).
  */
 export default function criarApp() {
+  validarVariaveisObrigatorias()
+
   const app = express()
 
   configs.middlewares.init(app, express)

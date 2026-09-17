@@ -1,11 +1,11 @@
 import NodeResponse from 'densyy-node-toolbox/core/tools/node-response.js'
-import packageJson from '../package.json' with { type: 'json' }
 
 const nodeResponse = new NodeResponse()
 
+// Sem nome/versão do serviço aqui — rota pública, sem auth. É reconhecimento
+// de graça pra quem estiver sondando (mesmo raciocínio já aplicado em /health).
 function index (_req, res) {
-  const { version, name } = packageJson
-  return nodeResponse.success(res, `Bem vindo à ${name} (${version})`)
+  return nodeResponse.success(res, 'ok')
 }
 
 function hoje (_req, res) {
