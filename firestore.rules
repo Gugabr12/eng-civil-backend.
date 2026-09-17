@@ -1,0 +1,13 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Todo acesso a dados passa pela Cloud Function (Admin SDK), que ignora
+    // estas regras. Bloquear tudo aqui fecha qualquer acesso direto de um
+    // cliente ao banco — nem um frontend comprometido consegue ler ou
+    // escrever direto no Firestore, só através da API auditada.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

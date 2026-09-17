@@ -1,0 +1,27 @@
+# MODULES
+node_modules
+
+# LOCK FILES
+package-lock.json
+yarn.lock
+bun.lock
+bun.lockb
+
+# ENV
+# `.env*` cobre também backups manuais (.env.backup, .env.old): eles carregam
+# MONGO_STRING, ENCRYPTION_KEY e chaves de gateway, e um `git add -A` distraído
+# os mandaria para o repositório. O exemplo é reincluído logo abaixo.
+.env*
+!.env.example
+.claude
+
+# O pnpm recria este arquivo com placeholders ("set this to true or false")
+# ao bloquear build scripts, e ele quebra o `pnpm install` do Dockerfile com
+# "packages field missing or empty". Ja foi removido em a604fa0 e voltou.
+pnpm-workspace.yaml
+
+# FIREBASE (logs de debug do CLI, gerados ao rodar comandos localmente)
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+ui-debug.log

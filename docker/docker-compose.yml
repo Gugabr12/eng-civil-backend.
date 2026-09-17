@@ -1,0 +1,12 @@
+# Só para desenvolvimento local. Credenciais vêm de `.env` (nunca hardcoded
+# aqui, esse arquivo é versionado) e a porta só aceita conexão da própria
+# máquina — nunca publique 27017 em 0.0.0.0 fora de localhost.
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - '127.0.0.1:27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:?defina MONGO_ROOT_USER no .env}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?defina MONGO_ROOT_PASSWORD no .env}

@@ -1,0 +1,10 @@
+# MODULES
+node_modules
+
+# LOCK FILES
+package-lock.json
+yarn.lock
+bun.lock
+bun.lockb
+
+.claude

@@ -1,0 +1,33 @@
+{
+  "name": "api-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "predev": "node bin/liberar-porta.mjs 8810",
+    "dev": "node --watch --import ./instrument.mjs index.js",
+    "start": "node --import ./instrument.mjs index.js",
+    "prod": "node --import ./instrument.mjs index.js",
+    "seed:admin": "node --env-file=.env bin/seed-admin.js",
+    "test": "vitest"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@sentry/node": "^10.70.0",
+    "densyy-node-toolbox": "^0.0.2",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.4.0",
+    "firebase-admin": "^13.0.0",
+    "pdfkit": "^0.15.0"
+  },
+  "devDependencies": {
+    "standard": "^17.1.2",
+    "supertest": "^7.1.0",
+    "vitest": "^3.1.3"
+  }
+}
