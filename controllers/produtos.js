@@ -2,6 +2,7 @@ import NodeResponse from 'densyy-node-toolbox/core/tools/node-response.js'
 import repositoryProdutos from '../repositories/produtos.js'
 import repositoryMovimentacoes from '../repositories/movimentacoes.js'
 import repositoryObras from '../repositories/obras.js'
+import repositoryUsuarios from '../repositories/usuarios.js'
 import configError from '../configs/error.js'
 import obraAcesso from '../middlewares/obra-acesso.js'
 import { CATEGORIAS, UNIDADES } from '../shared/models/produtos.js'
@@ -63,7 +64,18 @@ async function receberPorID(req, res) {
   try {
     const produto = req.produto
 
-    const movimentacoes = await repositoryMovimentacoes.listarPorProduto(req.params.id)
+    const lista = await repositoryMovimentacoes.listarPorProduto(req.params.id)
+
+    // Nome de quem fez cada movimento: o funcionário precisa saber para onde o
+    // material foi e quem retirou. Só o nome, nunca e-mail nem outros dados.
+    const ids = [...new Set(lista.map((movimentacao) => movimentacao.usuarioId).filter(Boolean))]
+    const nomes = new Map()
+    await Promise.all(ids.map(async (id) => {
+      const usuario = await repositoryUsuarios.receberPorID(id)
+      if (usuario?.nome) nomes.set(id, usuario.nome)
+    }))
+    const movimentacoes = lista.map((movimentacao) => ({ ...movimentacao, usuarioNome: nomes.get(movimentacao.usuarioId) || null }))
+
     return nodeResponse.success(res, { ...produto, movimentacoes })
   } catch (error) {
     return configError.capture(res, error)
