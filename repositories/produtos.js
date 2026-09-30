@@ -27,9 +27,12 @@ function existeAtivo(id) {
 
 // Sem equivalente a aggregation pipeline (`$expr`) no Firestore — o dataset é
 // pequeno (estoque de uma empresa), então filtra em memória.
-async function abaixoDoMinimo() {
+// `obraIds` null = todas as obras; senão só as listadas.
+async function abaixoDoMinimo(obraIds = null) {
   const produtos = await model.filter({ ativo: true }, null, null)
-  return ordenar(produtos.filter((produto) => produto.quantidadeAtual <= produto.quantidadeMinima))
+  return ordenar(
+    produtos.filter((produto) => produto.quantidadeAtual <= produto.quantidadeMinima && (!obraIds || obraIds.includes(produto.obraId)))
+  )
 }
 
 function ordenar(produtos) {
@@ -44,6 +47,7 @@ function adicionar(dados) {
   const comprimentoBarraMetros = quantidadeValida(dados.comprimentoBarraMetros)
 
   const payload = {
+    obraId: String(dados.obraId),
     categoria: typeof dados.categoria === 'string' ? dados.categoria : '',
     nome: typeof dados.nome === 'string' ? dados.nome.trim() : '',
     bitola: typeof dados.bitola === 'string' ? dados.bitola.trim() : '',

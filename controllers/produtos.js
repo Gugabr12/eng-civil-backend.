@@ -1,7 +1,9 @@
 import NodeResponse from 'densyy-node-toolbox/core/tools/node-response.js'
 import repositoryProdutos from '../repositories/produtos.js'
 import repositoryMovimentacoes from '../repositories/movimentacoes.js'
+import repositoryObras from '../repositories/obras.js'
 import configError from '../configs/error.js'
+import obraAcesso from '../middlewares/obra-acesso.js'
 import { CATEGORIAS, UNIDADES } from '../shared/models/produtos.js'
 
 const nodeResponse = new NodeResponse()
@@ -17,7 +19,7 @@ function quantidadePositiva(valor) {
 
 async function listar(req, res) {
   try {
-    const filters = {}
+    const filters = { obraId: req.obra._id }
     // `req.query.categoria` pode chegar como objeto (`?categoria[$regex]=...`)
     // com o parser 'extended' do Express — só aceitamos string de uma lista
     // fechada, nunca repassamos o valor cru pro filtro do Mongo.
@@ -37,8 +39,21 @@ async function listar(req, res) {
 
 async function abaixoDoMinimo(req, res) {
   try {
-    const produtos = await repositoryProdutos.abaixoDoMinimo()
-    return nodeResponse.success(res, produtos)
+    let obraIds = null
+    if (req.query.obraId) {
+      if (typeof req.query.obraId !== 'string') return nodeResponse.simpleError(res, 422, 'obraId inválido.')
+      const obra = await repositoryObras.receberPorID(req.query.obraId)
+      if (!obra || !obraAcesso.podeAcessar(req.usuario, obra._id)) return nodeResponse.simpleError(res, 404, 'Obra não encontrada.')
+      obraIds = [obra._id]
+    }
+
+    const obras = await repositoryObras.listar()
+    const permitidas = obras.filter((obra) => obraAcesso.podeAcessar(req.usuario, obra._id))
+    const nomes = new Map(permitidas.map((obra) => [obra._id, obra.nome]))
+    const escopo = (obraIds || [...nomes.keys()]).filter((id) => nomes.has(id))
+
+    const produtos = await repositoryProdutos.abaixoDoMinimo(escopo)
+    return nodeResponse.success(res, produtos.map((produto) => ({ ...produto, obraNome: nomes.get(produto.obraId) })))
   } catch (error) {
     return configError.capture(res, error)
   }
@@ -46,8 +61,7 @@ async function abaixoDoMinimo(req, res) {
 
 async function receberPorID(req, res) {
   try {
-    const produto = await repositoryProdutos.receberPorID(req.params.id)
-    if (!produto) return nodeResponse.simpleError(res, 404, 'Produto não encontrado.')
+    const produto = req.produto
 
     const movimentacoes = await repositoryMovimentacoes.listarPorProduto(req.params.id)
     return nodeResponse.success(res, { ...produto, movimentacoes })
@@ -67,7 +81,7 @@ async function criar(req, res) {
       return nodeResponse.simpleError(res, 422, `unidade deve ser uma de: ${UNIDADES.join(', ')}`)
     }
 
-    const resultado = await repositoryProdutos.adicionar(body)
+    const resultado = await repositoryProdutos.adicionar({ ...body, obraId: req.obra._id })
     const criado = Array.isArray(resultado) ? resultado[0] : resultado
     const produto = await repositoryProdutos.receberPorID(criado._id)
 

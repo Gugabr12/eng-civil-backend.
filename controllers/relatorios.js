@@ -137,7 +137,7 @@ function larguraUtil(doc) {
   return doc.page.width - MARGEM * 2
 }
 
-function desenharCabecalho(doc, geradoEm, ehPrimeira) {
+function desenharCabecalho(doc, geradoEm, ehPrimeira, obraNome) {
   const altura = ehPrimeira ? 86 : 48
 
   // Faixa sangrada até a borda: é o que dá cara de documento da empresa em vez
@@ -151,11 +151,11 @@ function desenharCabecalho(doc, geradoEm, ehPrimeira) {
     .text('Relatório de Estoque', MARGEM, ehPrimeira ? 28 : 17)
 
   if (ehPrimeira) {
-    doc.font('Helvetica').fontSize(10).fillColor('#C6D6E2').text('Eng Civil — controle de estoque da obra', MARGEM, 55)
+    doc.font('Helvetica').fontSize(10).fillColor('#C6D6E2').text(`Obra: ${obraNome}`, MARGEM, 55)
 
     doc.fontSize(9).fillColor('#C6D6E2').text(`Gerado em ${geradoEm}`, MARGEM, 28, { width: larguraUtil(doc), align: 'right' })
   } else {
-    doc.font('Helvetica').fontSize(9).fillColor('#C6D6E2').text(geradoEm, MARGEM, 21, { width: larguraUtil(doc), align: 'right' })
+    doc.font('Helvetica').fontSize(9).fillColor('#C6D6E2').text(`${obraNome} · ${geradoEm}`, MARGEM, 21, { width: larguraUtil(doc), align: 'right' })
   }
 
   doc.y = altura + 24
@@ -323,7 +323,7 @@ function desenharObservacoes(doc, produto) {
   doc.y += 6
 }
 
-function desenharTabela(doc, categoria, itens, geradoEm) {
+function desenharTabela(doc, categoria, itens, geradoEm, obraNome) {
   const colunas = colunasDe(categoria)
 
   // Título + cabeçalho + uma linha: se isso não couber, a categoria começa na
@@ -331,7 +331,7 @@ function desenharTabela(doc, categoria, itens, geradoEm) {
   // relatório gerado em laço.
   if (!cabeNaPagina(doc, 30 + ALTURA_LINHA * 2)) {
     doc.addPage()
-    desenharCabecalho(doc, geradoEm, false)
+    desenharCabecalho(doc, geradoEm, false, obraNome)
   }
 
   desenharTituloCategoria(doc, categoria, itens)
@@ -340,7 +340,7 @@ function desenharTabela(doc, categoria, itens, geradoEm) {
   itens.forEach((produto, indice) => {
     if (!cabeNaPagina(doc, ALTURA_LINHA)) {
       doc.addPage()
-      desenharCabecalho(doc, geradoEm, false)
+      desenharCabecalho(doc, geradoEm, false, obraNome)
       desenharCabecalhoTabela(doc, colunas)
     }
 
@@ -387,7 +387,8 @@ function desenharRodapes(doc) {
 
 async function estoquePdf(req, res) {
   try {
-    const produtos = await repositoryProdutos.listar()
+    const obraNome = req.obra.nome
+    const produtos = await repositoryProdutos.listar({ obraId: req.obra._id })
     const grupos = agruparPorCategoria(produtos)
     const emFalta = produtos.filter(estaAbaixoDoMinimo)
     const agora = new Date()
@@ -410,19 +411,19 @@ async function estoquePdf(req, res) {
       bufferPages: true,
       autoFirstPage: false,
       info: {
-        Title: 'Relatório de Estoque — Eng Civil',
+        Title: `Relatório de Estoque — ${obraNome}`,
         Author: 'Eng Civil',
-        Subject: `Posição do estoque em ${geradoEm}`
+        Subject: `Posição do estoque de ${obraNome} em ${geradoEm}`
       }
     })
 
     doc.pipe(res)
 
     doc.addPage()
-    desenharCabecalho(doc, geradoEm, true)
+    desenharCabecalho(doc, geradoEm, true, obraNome)
 
     if (produtos.length === 0) {
-      doc.font('Helvetica').fontSize(11).fillColor(COR.cinza).text('Nenhum produto cadastrado no estoque.', MARGEM, doc.y)
+      doc.font('Helvetica').fontSize(11).fillColor(COR.cinza).text('Nenhum produto cadastrado nesta obra.', MARGEM, doc.y)
     } else {
       desenharResumo(doc, produtos, emFalta)
       desenharAlertas(doc, emFalta)
@@ -440,7 +441,7 @@ async function estoquePdf(req, res) {
           return String(a.nome).localeCompare(String(b.nome), 'pt-BR')
         })
 
-        desenharTabela(doc, categoria, ordenados, geradoEm)
+        desenharTabela(doc, categoria, ordenados, geradoEm, obraNome)
       }
     }
 

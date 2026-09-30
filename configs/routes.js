@@ -2,6 +2,7 @@ import routeIndex from '../routes/index.js'
 import routeError from '../routes/error.js'
 import routeSaude from '../routes/saude.js'
 import routeAutenticacao from '../routes/autenticacao.js'
+import routeObras from '../routes/obras.js'
 import routeUsuarios from '../routes/usuarios.js'
 import routeProdutos from '../routes/produtos.js'
 import routeRelatorios from '../routes/relatorios.js'
@@ -13,6 +14,7 @@ function register(app) {
   app.use('/', routeSaude)
 
   app.use('/autenticacao', routeAutenticacao)
+  app.use('/obras', routeObras)
   app.use('/usuarios', routeUsuarios)
   app.use('/produtos', routeProdutos)
   app.use('/relatorios', routeRelatorios)

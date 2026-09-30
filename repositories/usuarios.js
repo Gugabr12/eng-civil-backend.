@@ -41,6 +41,7 @@ async function receberPorID(id) {
     nome: usuario.nome,
     email: usuario.email,
     role: usuario.role,
+    obras: Array.isArray(usuario.obras) ? usuario.obras : [],
     ativo: usuario.ativo,
     dataUltimoAcesso: usuario.dataUltimoAcesso,
     dataRegistro: usuario.dataRegistro
@@ -64,6 +65,7 @@ async function adicionar(dados) {
     email,
     senha: dados.senha,
     role: dados.role === 'admin' ? 'admin' : 'cliente',
+    obras: dados.role === 'admin' ? [] : [...new Set((dados.obras || []).map(String))],
     ativo: true,
     dataUltimoAcesso: null,
     dataRegistro: new Date()
@@ -87,6 +89,10 @@ function alterarAtivo(id, ativo) {
   return model.edit({ _id: id }, { ativo: !!ativo })
 }
 
+function alterarObras(id, obras) {
+  return model.edit({ _id: id }, { obras: [...new Set(obras.map(String))] })
+}
+
 function alterarSenha(id, senhaHash) {
   return model.edit({ _id: id }, { senha: senhaHash })
 }
@@ -104,6 +110,7 @@ export default {
   listar,
   adicionar,
   alterarAtivo,
+  alterarObras,
   alterarSenha,
   alterarUltimoAcesso
 }

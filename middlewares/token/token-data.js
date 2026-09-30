@@ -44,7 +44,8 @@ async function middlewareTokenData(req, res, next) {
     id: String(usuario._id),
     nome: usuario.nome,
     email: usuario.email,
-    role: usuario.role === 'admin' ? 'admin' : 'cliente'
+    role: usuario.role === 'admin' ? 'admin' : 'cliente',
+    obras: Array.isArray(usuario.obras) ? usuario.obras.map(String) : []
   }
   req.params.idUsuario = req.usuario.id
 

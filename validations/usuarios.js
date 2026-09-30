@@ -10,6 +10,10 @@ const rulesCriar = Object.freeze({
   role: 'required|string|maxLength:10'
 })
 
+const rulesAlterarObras = Object.freeze({
+  obras: 'required|array'
+})
+
 const rulesAlterarAtivo = Object.freeze({
   ativo: 'required|boolean'
 })
@@ -20,6 +24,12 @@ const rulesRedefinirSenha = Object.freeze({
 
 async function criar(req, res, next) {
   const validateOk = await validateHelper.validateRequest(res, req.body, rulesCriar)
+  if (validateOk === true) return next()
+  return false
+}
+
+async function alterarObras(req, res, next) {
+  const validateOk = await validateHelper.validateRequest(res, req.body, rulesAlterarObras)
   if (validateOk === true) return next()
   return false
 }
@@ -36,4 +46,4 @@ async function redefinirSenha(req, res, next) {
   return false
 }
 
-export default { criar, alterarAtivo, redefinirSenha }
+export default { criar, alterarAtivo, alterarObras, redefinirSenha }

@@ -1,10 +1,20 @@
 import NodeResponse from 'densyy-node-toolbox/core/tools/node-response.js'
 import NodePassword from 'densyy-node-toolbox/core/tools/node-password.js'
 import repositoryUsuarios from '../repositories/usuarios.js'
+import repositoryObras from '../repositories/obras.js'
 import configError from '../configs/error.js'
 
 const nodeResponse = new NodeResponse()
 const nodePassword = new NodePassword()
+
+// Só ids de obras que existem. Devolve a lista limpa ou `null` se algo for inválido.
+async function obrasValidas(ids) {
+  if (!Array.isArray(ids) || ids.some((id) => typeof id !== 'string' || !id)) return null
+  const unicos = [...new Set(ids)]
+  const existentes = await Promise.all(unicos.map((id) => repositoryObras.receberPorID(id)))
+  if (existentes.some((obra) => !obra)) return null
+  return unicos
+}
 
 async function listar(req, res) {
   try {
@@ -23,6 +33,12 @@ async function criar(req, res) {
       return nodeResponse.simpleError(res, 422, 'role deve ser "admin" ou "cliente".')
     }
 
+    let obras = []
+    if (body.role === 'cliente') {
+      obras = await obrasValidas(body.obras)
+      if (!obras || obras.length === 0) return nodeResponse.simpleError(res, 422, 'Escolha pelo menos uma obra existente para o funcionário.')
+    }
+
     const jaExiste = await repositoryUsuarios.exists({ email: body.email })
     if (jaExiste) return nodeResponse.simpleError(res, 409, 'Já existe uma conta com este email.')
 
@@ -33,13 +49,30 @@ async function criar(req, res) {
       nome: body.nome,
       email: body.email,
       senha: senhaHash,
-      role: body.role
+      role: body.role,
+      obras
     })
 
     const criado = Array.isArray(resultado) ? resultado[0] : resultado
     const usuario = await repositoryUsuarios.receberPorID(criado._id)
 
     return nodeResponse.create(res, usuario)
+  } catch (error) {
+    return configError.capture(res, error)
+  }
+}
+
+async function alterarObras(req, res) {
+  try {
+    const alvo = await repositoryUsuarios.receberPorID(req.params.id)
+    if (!alvo) return nodeResponse.simpleError(res, 404, 'Usuário não encontrado.')
+    if (alvo.role === 'admin') return nodeResponse.simpleError(res, 422, 'Administrador já enxerga todas as obras.')
+
+    const obras = await obrasValidas(req.body.obras)
+    if (!obras || obras.length === 0) return nodeResponse.simpleError(res, 422, 'Escolha pelo menos uma obra existente.')
+
+    await repositoryUsuarios.alterarObras(req.params.id, obras)
+    return nodeResponse.success(res, await repositoryUsuarios.receberPorID(req.params.id))
   } catch (error) {
     return configError.capture(res, error)
   }
@@ -76,5 +109,6 @@ export default {
   listar,
   criar,
   alterarAtivo,
+  alterarObras,
   redefinirSenha
 }

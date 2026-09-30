@@ -112,7 +112,8 @@ async function entrar(req, res) {
         id: usuario._id,
         nome: usuario.nome,
         email: usuario.email,
-        role: usuario.role
+        role: usuario.role,
+        obras: Array.isArray(usuario.obras) ? usuario.obras : []
       }
     })
   } catch (error) {

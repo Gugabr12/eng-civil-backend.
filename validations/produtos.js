@@ -7,6 +7,7 @@ import validateHelper from './validate.js'
 const LIMITE_QUANTIDADE = 1_000_000
 
 const rulesCriar = Object.freeze({
+  obraId: 'required|string|maxLength:100',
   categoria: 'required|string|maxLength:20',
   nome: 'required|string|maxLength:120',
   unidade: 'required|string|maxLength:20',

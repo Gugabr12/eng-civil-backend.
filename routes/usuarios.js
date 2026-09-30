@@ -13,6 +13,7 @@ const base = [middlewareToken, middlewareTokenData, middlewareAdmin]
 router.get('/', base, controllerUsuarios.listar)
 router.post('/', base, validationUsuarios.criar, controllerUsuarios.criar)
 router.patch('/:id/ativo', base, validationUsuarios.alterarAtivo, controllerUsuarios.alterarAtivo)
+router.patch('/:id/obras', base, validationUsuarios.alterarObras, controllerUsuarios.alterarObras)
 router.patch('/:id/senha', base, validationUsuarios.redefinirSenha, controllerUsuarios.redefinirSenha)
 
 export default router
