@@ -45,7 +45,9 @@ async function middlewareTokenData(req, res, next) {
     nome: usuario.nome,
     email: usuario.email,
     role: usuario.role === 'admin' ? 'admin' : 'cliente',
-    obras: Array.isArray(usuario.obras) ? usuario.obras.map(String) : []
+    obras: Array.isArray(usuario.obras) ? usuario.obras.map(String) : [],
+    // Superadmin (dono do sistema): invisível para os administradores da empresa.
+    oculto: usuario.oculto === true
   }
   req.params.idUsuario = req.usuario.id
 

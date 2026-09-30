@@ -42,6 +42,7 @@ async function receberPorID(id) {
     email: usuario.email,
     role: usuario.role,
     obras: Array.isArray(usuario.obras) ? usuario.obras : [],
+    oculto: usuario.oculto === true,
     ativo: usuario.ativo,
     dataUltimoAcesso: usuario.dataUltimoAcesso,
     dataRegistro: usuario.dataRegistro

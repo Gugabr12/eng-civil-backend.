@@ -16,10 +16,21 @@ async function obrasValidas(ids) {
   return unicos
 }
 
+// Conta oculta (superadmin) só aparece e só pode ser alterada por outra conta oculta.
+// Para os demais, responde como se não existisse.
+async function alvoVisivel(req, res) {
+  const alvo = await repositoryUsuarios.receberPorID(req.params.id)
+  if (!alvo || (alvo.oculto && !req.usuario.oculto)) {
+    nodeResponse.simpleError(res, 404, 'Usuário não encontrado.')
+    return null
+  }
+  return alvo
+}
+
 async function listar(req, res) {
   try {
     const usuarios = await repositoryUsuarios.listar()
-    return nodeResponse.success(res, usuarios)
+    return nodeResponse.success(res, req.usuario.oculto ? usuarios : usuarios.filter((usuario) => usuario.oculto !== true))
   } catch (error) {
     return configError.capture(res, error)
   }
@@ -64,8 +75,8 @@ async function criar(req, res) {
 
 async function alterarObras(req, res) {
   try {
-    const alvo = await repositoryUsuarios.receberPorID(req.params.id)
-    if (!alvo) return nodeResponse.simpleError(res, 404, 'Usuário não encontrado.')
+    const alvo = await alvoVisivel(req, res)
+    if (!alvo) return undefined
     if (alvo.role === 'admin') return nodeResponse.simpleError(res, 422, 'Administrador já enxerga todas as obras.')
 
     const obras = await obrasValidas(req.body.obras)
@@ -86,6 +97,8 @@ async function alterarAtivo(req, res) {
       return nodeResponse.simpleError(res, 422, 'Você não pode desativar a própria conta.')
     }
 
+    if (!(await alvoVisivel(req, res))) return undefined
+
     await repositoryUsuarios.alterarAtivo(req.params.id, req.body.ativo)
     const usuario = await repositoryUsuarios.receberPorID(req.params.id)
     return nodeResponse.success(res, usuario)
@@ -96,6 +109,8 @@ async function alterarAtivo(req, res) {
 
 async function redefinirSenha(req, res) {
   try {
+    if (!(await alvoVisivel(req, res))) return undefined
+
     const key = process.env.BCRYPT_KEY
     const senhaHash = await nodePassword.toHash(req.body.senha, key)
     await repositoryUsuarios.alterarSenha(req.params.id, senhaHash)
